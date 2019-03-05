@@ -6,4 +6,15 @@ aws secretsmanager get-secret-value --secret-id todobackend/credentials \
     --query SecretString --output text \
     | jq -r 'to_entries[] | "export \(.key)='\''\(.value)'\''"'
 
-    
+#create ecr repo from cloudformation script
+aws cloudformation deploy --template-file ecr.yml --stack-name ecr-repositories
+
+#build custom Codebuild docker image from Dockerfile
+docker build -t codebuild -f Dockerfile.codebuild .    
+
+# grab the repository URI and then put in the command below to tag the codebuild image, login and publish image
+aws ecs describe-instances
+docker tag codebuild 284148388796.dkr.ecr.us-east-1.amazonaws.com/docker-in-aws/codebuild
+eval $(aws ecr get-login --no-include-email)
+docker push 284148388796.dkr.ecr.us-east-1.amazonaws.com/docker-in-aws/codebuild
+
